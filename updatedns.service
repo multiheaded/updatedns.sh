@@ -1,0 +1,13 @@
+[Unit]
+Description=Check and update dns entries with updatedns.sh
+
+[Service]
+ExecStart=/home/pi/updatedns/updatedns.sh
+WorkingDirectory=/home/pi/updatedns
+
+RestartSec=180
+Restart=always
+
+[Install]
+WantedBy=default.target
+

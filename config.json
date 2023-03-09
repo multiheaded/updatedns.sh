@@ -1,0 +1,13 @@
+{
+    "updatedns" : [
+        {
+            "Keyfile"     : "tsig.key",
+            "IPv4Service" : "http://checkip.dyndns.com/index.html",
+            "IPv6Service" : "http://checkipv6.dyndns.com/index.html",
+            "DNSServer"   : "your.dns.com",
+            "Zone"        : "yourzone.org",
+            "Host"        : "yourhost.yourzone.org",
+            "TTL"         : "900"
+        }
+    ]
+}
