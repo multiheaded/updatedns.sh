@@ -6,7 +6,7 @@ Type=simple
 ExecStart=/home/pi/updatedns/updatedns.sh
 WorkingDirectory=/home/pi/updatedns
 
-RestartSec=180
+RestartSec=300
 Restart=always
 
 [Install]

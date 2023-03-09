@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 SCRIPT=$(readlink -f $0)
 SCRIPTPATH=$(dirname $SCRIPT)
 
@@ -148,7 +147,7 @@ QUERY=$(generateUpdateQuery)
 
 if [ $? -eq 0 ]
 then
-    ${ECHO} -e -n $QUERY # | ${NSUPDATE} -k ${KEYFILE} >&2
+    ${ECHO} -e -n $QUERY | ${NSUPDATE} -k ${KEYFILE} >&2
 fi
 
 
