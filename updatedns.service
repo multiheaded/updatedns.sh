@@ -2,6 +2,7 @@
 Description=Check and update dns entries with updatedns.sh
 
 [Service]
+Type=simple
 ExecStart=/home/pi/updatedns/updatedns.sh
 WorkingDirectory=/home/pi/updatedns
 
