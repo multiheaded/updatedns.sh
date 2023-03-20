@@ -51,14 +51,14 @@ IPV6SITE=$(${JQ} -r '.updatedns[0].IPv6Service' ${CONFIGFILE})
 IPV4SITE=$(${JQ} -r '.updatedns[0].IPv4Service' ${CONFIGFILE})
 DNSSERVER=$(${JQ} -r '.updatedns[0].DNSServer' ${CONFIGFILE})
 ZONE=$(${JQ} -r '.updatedns[0].Zone' ${CONFIGFILE})
-HOST=$(${JQ} -r '.updatedns[0].Host' ${CONFIGFILE})
+HOSTS=$(${JQ} -c -r '.updatedns[0].Host[]' ${CONFIGFILE})
 TTL=$(${JQ} -r '.updatedns[0].TTL' ${CONFIGFILE})
 
 SETTINGSPRESENT=0
-for C in "KEYFILE" "IPV6SITE" "IPV4SITE" "DNSSERVER" "ZONE" "HOST" "TTL"
+for C in "KEYFILE" "IPV6SITE" "IPV4SITE" "DNSSERVER" "ZONE" "HOSTS" "TTL"
 do
     VALUE="${!C}"
-    echo "${VALUE}"
+#    echo "->${VALUE}<-"
     test -z "${VALUE}" || test "${VALUE}" = "null" && { echo "${C} has not been properly configured." >&2; SETTINGSPRESENT=1; } 
 done
 
@@ -96,11 +96,13 @@ collectIPv6Addr() {
 }
 
 digAssignedIPv4Addr() {
+    local HOST=$1
     getIPAddr "${DIG} +noall +answer ${HOST} @${DNSSERVER} A" "$IPV4REGEX"
     return $?
 }
 
 digAssignedIPv6Addr() {
+    local HOST=$1
     getIPAddr "${DIG} +noall +answer ${HOST} @${DNSSERVER} AAAA" "$IPV6REGEX"
     return $?
 }
@@ -108,7 +110,8 @@ digAssignedIPv6Addr() {
 generateRecordUpdateStr() {
     local FINDIP=$1
     local DIGIP=$2
-    local RECORDTYPE=$3
+    local HOST=$3
+    local RECORDTYPE=$4
 
     local SHOULDUPDATE=1
     local UPDATESTR=""
@@ -116,14 +119,14 @@ generateRecordUpdateStr() {
     local CURRENTIP=$($FINDIP)
     if [ $? -eq 0 ]
     then
-        local DUGIP=$($DIGIP)
+        local DUGIP=$($DIGIP ${HOST})
         if [ "a${CURRENTIP}" != "a${DUGIP}" ]
         then
             SHOULDUPDATE=0
             UPDATESTR="${UPDATESTR}$(${ECHO} -n "update delete ${HOST} ${RECORDTYPE}\n")"
             UPDATESTR="${UPDATESTR}$(${ECHO} -n "update add ${HOST} ${TTL} ${RECORDTYPE} ${CURRENTIP}\n")"
         else
-            echo "No need to update ${RECORDTYPE} record, is set to ${CURRENTIP}" >&2
+            echo "No need to update ${RECORDTYPE} record, ${HOST} is set to ${CURRENTIP}" >&2
         fi
     fi
 
@@ -134,8 +137,11 @@ generateRecordUpdateStr() {
 generateUpdateQuery() {
     local QUERY=$(${ECHO} -n "server ${DNSSERVER}\nzone ${ZONE}\n" )
 
-    QUERY="${QUERY}$(generateRecordUpdateStr collectIPv4Addr digAssignedIPv4Addr A)"
-    QUERY="${QUERY}$(generateRecordUpdateStr collectIPv6Addr digAssignedIPv6Addr AAAA)"
+    for HOST in $HOSTS
+    do
+        QUERY="${QUERY}$(generateRecordUpdateStr collectIPv4Addr digAssignedIPv4Addr ${HOST} A)"
+        QUERY="${QUERY}$(generateRecordUpdateStr collectIPv6Addr digAssignedIPv6Addr ${HOST} AAAA)"
+    done
 
     QUERY="${QUERY}$(${ECHO} -n "show\nsend\n")"
 
